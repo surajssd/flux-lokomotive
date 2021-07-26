@@ -1,0 +1,11 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: lokomotive
+  namespace: flux-system
+spec:
+  interval: 30s
+  ref:
+    # This branch has ported some component that we don't ship as helm chart to helm chart.
+    branch: surajssd/custom-component
+  url: https://github.com/kinvolk/lokomotive/

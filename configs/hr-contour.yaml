@@ -1,0 +1,26 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: contour
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      # Relative path to the chart dir
+      chart: ./assets/charts/components/contour/
+      sourceRef:
+        kind: GitRepository
+        name: lokomotive
+      # If a third party updates the version then we will have an automatic update mechanism in place.
+      version: 0.3.3
+  install:
+    crds: CreateReplace
+    # Contour ships the namespace config.
+    createNamespace: false
+  interval: 10m1s
+  # Namespace of the contour component.
+  targetNamespace: projectcontour
+  # Chart's values file.
+  values:
+    envoy:
+      serviceType: "LoadBalancer"

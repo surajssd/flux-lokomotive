@@ -1,0 +1,80 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: prometheus-operator
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      # Relative path to the chart dir
+      chart: ./assets/charts/components/prometheus-operator/
+      sourceRef:
+        kind: GitRepository
+        name: lokomotive
+      # If a third party updates the version then we will have an automatic update mechanism in place.
+      version: 16.9.2
+  install:
+    crds: CreateReplace
+    # Contour ships the namespace config.
+    createNamespace: true
+  upgrade:
+    crds: CreateReplace
+    force: true
+  interval: 10m0s
+  # Namespace of the prometheus-operator component.
+  targetNamespace: monitoring
+  values:
+    # global:
+    #   rbac:
+    #     pspAnnotations:
+    #       seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default,runtime/default'
+    #       seccomp.security.alpha.kubernetes.io/defaultProfileName:  'docker/default'
+    prometheus:
+      prometheusSpec:
+        storageSpec:
+          volumeClaimTemplate:
+            metadata:
+              name: data
+            spec:
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: "50Gi"
+
+    kubeControllerManager:
+      enabled: "true"
+      service:
+        selector:
+          k8s-app: kube-controller-manager
+          tier: control-plane
+
+    kubeScheduler:
+      enabled: "true"
+      service:
+        selector:
+          k8s-app: kube-scheduler
+          tier: control-plane
+
+    # kube-state-metrics:
+    #   podSecurityPolicy:
+    #     annotations:
+    #       seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default,runtime/default'
+    #       seccomp.security.alpha.kubernetes.io/defaultProfileName:  'docker/default'
+
+    kubeProxy:
+      enabled: "true"
+
+    kubelet:
+      enabled: "true"
+
+    grafana:
+      plugins: "grafana-piechart-panel"
+      testFramework:
+        enabled: false
+      sidecar:
+        dashboards:
+          searchNamespace: ALL
+          provider:
+            foldersFromFilesStructure: true
+      rbac:
+        pspUseAppArmor: false
